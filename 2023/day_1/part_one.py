@@ -29,14 +29,16 @@ def parse_digit(str):
         return 7, 5
     if 'eight' in str:
         return 8, 5
-    str = str[:-1]
+    if len(str) > 4:
+        str = str[:-1]
     if 'four' in str:
         return 4, 4
     if 'five' in str:
         return 5, 4
     if 'nine' in str:
         return 9, 4
-    str = str[:-1]
+    if len(str) > 3:
+        str = str[:-1]
     if 'one' in str:
         return 1, 3
     if 'two' in str:

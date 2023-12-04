@@ -3,15 +3,35 @@ def load_matrix(path):
     f = open(path)
     for line in f:
         print(line)
-        matrix.append(line.split())
+        matrix.append(list(line[:-1]))
     f.close()
     return matrix
+
+
+def get_part_number(matrix, row, column):
+    offset = 1
+    number_str = matrix[row][column]
+    while matrix[row][column + offset].isdigit():
+        number_str += matrix[row][column + offset]
+        offset += 1
+    print(number_str)
+    return (int(number_str), offset)
 
 
 def sum_adjacent(path):
     sum = 0
     matrix = load_matrix(path)
     print(matrix)
+    row = 0
+    while row < len(matrix):
+        column = 0
+        while column < len(matrix[row]):
+            if matrix[row][column].isdigit():
+                number, offset = get_part_number(matrix, row, column)
+                sum += number
+                column += offset
+            column += 1
+        row += 1
     return sum
 
 

@@ -64,10 +64,8 @@ def get_part_number(matrix, row, column):
     while column + offset < len(matrix[row]) and matrix[row][column + offset].isdigit():
         number_str += matrix[row][column + offset]
         offset += 1
-    print(number_str)
     offset -= 1
     if (is_adjacent(matrix, row, column, offset)):
-        print(number_str)
         part_number = int(number_str)
     return (part_number, offset)
 

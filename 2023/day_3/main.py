@@ -86,11 +86,102 @@ def sum_adjacent(path):
     return sum
 
 
+def remove_duplicates(matches):
+    if len(matches) == 0:
+        return []
+    trimmed_matches = [matches[0]]
+    if len(matches) == 2:
+        if matches[1][1] - matches[0][1] > 1:
+            trimmed_matches.append(matches[1])
+    return trimmed_matches
+
+
+def get_matches_above(matrix, row, column):
+    if row < 0:
+        return None
+    matches = []
+    c = column if column >= 0 else column + 1
+    limit = column + 2 if column < len(matrix[row]) else column + 1
+    while c <= limit:
+        if matrix[row][c].isdigit():
+            matches.append((row, c))
+        c += 1
+    return remove_duplicates(matches)
+
+
+def get_matches_below(matrix, row, column):
+    if row > len(matrix):
+        return None
+    matches = []
+    c = column if column >= 0 else column + 1
+    limit = column + 2 if column < len(matrix[row]) else column + 1
+    while c <= limit:
+        if matrix[row][c].isdigit():
+            matches.append((row, c))
+        c += 1
+    return remove_duplicates(matches)
+
+
+def get_matches_sides(matrix, row, column):
+    matches = []
+    if column > 0:
+        if matrix[row][column - 1].isdigit():
+            matches.append((row, column - 1))
+    if column + 1 < len(matrix[row]):
+        if matrix[row][column + 1].isdigit():
+            matches.append((row, column + 1))
+    return matches
+
+
+def check_surrounding(matrix, row, column):
+    above = get_matches_above(matrix, row - 1, column - 1)
+    below = get_matches_below(matrix, row + 1, column - 1)
+    sides = get_matches_sides(matrix, row, column)
+    return [*above, *sides, *below]
+
+
+def get_gear_number(matrix, row, column):
+    c = column
+    number = 0
+    while c > 0 and matrix[row][c - 1].isdigit():
+        c -= 1
+    while c < len(matrix[row]) and matrix[row][c].isdigit():
+        number *= 10
+        number += int(matrix[row][c])
+        c += 1
+    return number
+
+
+def get_gear_ratio(matrix, row, column):
+    gear_ratio = 0
+    matches = check_surrounding(matrix, row, column)
+    if len(matches) == 2:
+        gear_ratio = 1
+        for match in matches:
+            gear_ratio *= get_gear_number(matrix, match[0], match[1])
+    return gear_ratio
+
+
+def sum_ratios(path):
+    sum = 0
+    matrix = load_matrix(path)
+    row = 0
+    while row < len(matrix):
+        column = 0
+        while column < len(matrix[row]):
+            if matrix[row][column] == '*':
+                gear_ratio = get_gear_ratio(matrix, row, column)
+                sum += gear_ratio
+            column += 1
+        row += 1
+    return sum
+
+
 def solve(path, part):
     if part == 1:
         sum = sum_adjacent(path)
     else:
-        sum = 0
+        sum = sum_ratios(path)
     print(sum)
 
 

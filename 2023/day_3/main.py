@@ -2,26 +2,79 @@ def load_matrix(path):
     matrix = []
     f = open(path)
     for line in f:
-        print(line)
         matrix.append(list(line[:-1]))
     f.close()
     return matrix
 
 
+def symbol_above(matrix, upper_row, left_column, right_column):
+    if upper_row < 0:
+        return False
+    c = left_column if left_column >= 0 else 0
+    limit = right_column if right_column < len(
+        matrix[upper_row]) else right_column - 1
+    while c <= limit:
+        if matrix[upper_row][c] != '.':
+            return True
+        c += 1
+    return False
+
+
+def symbol_on_side(matrix, row, left_column, right_column):
+    if left_column >= 0:
+        if matrix[row][left_column] != '.':
+            return True
+    if right_column < len(matrix[row]):
+        if matrix[row][right_column] != '.':
+            return True
+    return False
+
+
+def symbol_below(matrix, lower_row, left_column, right_column):
+    if lower_row >= len(matrix):
+        return False
+    c = left_column if left_column >= 0 else 0
+    limit = right_column if right_column < len(
+        matrix[lower_row]) else right_column - 1
+    while c <= limit:
+        if matrix[lower_row][c] != '.':
+            return True
+        c += 1
+    return False
+
+
+def is_adjacent(matrix, row, column, offset):
+    upper_row = row - 1
+    left_column = column - 1
+    lower_row = row + 1
+    right_column = column + offset + 1
+    if symbol_above(matrix, upper_row, left_column, right_column):
+        return True
+    if symbol_on_side(matrix, row, left_column, right_column):
+        return True
+    if symbol_below(matrix, lower_row, left_column, right_column):
+        return True
+    return False
+
+
 def get_part_number(matrix, row, column):
+    part_number = 0
     offset = 1
     number_str = matrix[row][column]
-    while matrix[row][column + offset].isdigit():
+    while column + offset < len(matrix[row]) and matrix[row][column + offset].isdigit():
         number_str += matrix[row][column + offset]
         offset += 1
     print(number_str)
-    return (int(number_str), offset)
+    offset -= 1
+    if (is_adjacent(matrix, row, column, offset)):
+        print(number_str)
+        part_number = int(number_str)
+    return (part_number, offset)
 
 
 def sum_adjacent(path):
     sum = 0
     matrix = load_matrix(path)
-    print(matrix)
     row = 0
     while row < len(matrix):
         column = 0

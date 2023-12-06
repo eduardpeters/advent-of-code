@@ -2,6 +2,12 @@ def get_int_list(string: str):
     return [int(x) for x in string.strip().split(':')[1].strip().split()]
 
 
+def get_int_str(string: str):
+    number_str = ''
+    str_list = [x for x in string.strip().split(':')[1].strip().split()]
+    return number_str.join(str_list)
+
+
 def load_races(path):
     races = []
     f = open(path)
@@ -13,6 +19,15 @@ def load_races(path):
         races.append({'time': times[index], 'distance': distances[index]})
         index += 1
     return races
+
+
+def load_single_race(path):
+    races = []
+    f = open(path)
+    time = get_int_str(f.readline())
+    distance = get_int_str(f.readline())
+    f.close()
+    return (time, distance)
 
 
 def count_strategies(race):
@@ -36,11 +51,18 @@ def get_strategy_product(path):
     return product
 
 
+def get_root_distance(path):
+    distance = 1
+    race = load_single_race(path)
+    print(race)
+    return distance
+
+
 def solve(path, part):
     if part == 1:
         sum = get_strategy_product(path)
     else:
-        sum = 0
+        sum = get_root_distance(path)
     print(sum)
 
 

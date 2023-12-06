@@ -31,11 +31,33 @@ def sum_scores(path):
     return sum
 
 
+def get_match_count(card):
+    count = 0
+    for number in card['winning']:
+        if number in card['played']:
+            count += 1
+    return count
+
+
+def sum_cards(path):
+    cards = load_cards(path)
+    card_count = [1] * len(cards)
+    index = 0
+    while index < len(cards):
+        factor = card_count[index]
+        score = get_match_count(cards[index])
+        while score > 0:
+            card_count[index + score] += factor
+            score -= 1
+        index += 1
+    return sum(card_count)
+
+
 def solve(path, part):
     if part == 1:
         sum = sum_scores(path)
     else:
-        sum = 1
+        sum = sum_cards(path)
     print(sum)
 
 

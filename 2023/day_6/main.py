@@ -1,4 +1,3 @@
-# Part 1 288 (4 * 8 * 9)
 def get_int_list(string: str):
     return [int(x) for x in string.strip().split(':')[1].strip().split()]
 
@@ -16,16 +15,30 @@ def load_races(path):
     return races
 
 
-def get_strategy_count(path):
-    sum = 0
+def count_strategies(race):
+    strategies = 0
+    button_time = 1
+    while button_time < race['time']:
+        speed = button_time
+        movement_time = race['time'] - button_time
+        distance_traveled = speed * movement_time
+        if distance_traveled > race['distance']:
+            strategies += 1
+        button_time += 1
+    return strategies
+
+
+def get_strategy_product(path):
+    product = 1
     races = load_races(path)
-    print(races)
-    return sum
+    for race in races:
+        product *= count_strategies(race)
+    return product
 
 
 def solve(path, part):
     if part == 1:
-        sum = get_strategy_count(path)
+        sum = get_strategy_product(path)
     else:
         sum = 0
     print(sum)

@@ -1,6 +1,29 @@
+def parse_card(line):
+    sides = line.split('|')
+    winning = [int(x) for x in sides[0].split(':')[1].strip().split()]
+    played = [int(x) for x in sides[1].strip().split()]
+    return {'winning': winning, 'played': played}
+
+
+def load_cards(path):
+    cards = []
+    f = open(path)
+    for line in f:
+        cards.append(parse_card(line))
+    f.close()
+    return cards
+
+
+def sum_scores(path):
+    sum = 0
+    cards = load_cards(path)
+    print(cards)
+    return len(cards)
+
+
 def solve(path, part):
     if part == 1:
-        sum = 0
+        sum = sum_scores(path)
     else:
         sum = 1
     print(sum)

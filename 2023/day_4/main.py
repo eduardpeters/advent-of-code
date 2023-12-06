@@ -14,11 +14,21 @@ def load_cards(path):
     return cards
 
 
+def get_score(card):
+    exponent = -1
+    for number in card['winning']:
+        if number in card['played']:
+            exponent += 1
+    score = 2**exponent if exponent >= 0 else 0
+    return score
+
+
 def sum_scores(path):
     sum = 0
     cards = load_cards(path)
-    print(cards)
-    return len(cards)
+    for card in cards:
+        sum += get_score(card)
+    return sum
 
 
 def solve(path, part):

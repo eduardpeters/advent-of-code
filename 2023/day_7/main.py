@@ -1,3 +1,12 @@
+FIVE_KIND = 7
+FOUR_KIND = 6
+FULL_HOUSE = 5
+THREE_KIND = 3
+TWO_PAIR = 2
+ONE_PAIR = 1
+HIGH_CARD = 0
+
+
 def load_plays(path):
     plays = []
     f = open(path)
@@ -15,15 +24,29 @@ def classify_hand(hand):
             card_counts[card] = 1
         else:
             card_counts[card] += 1
-
-    print(card_counts)
+    counts = list(card_counts.values())
+    if 5 in counts:
+        return FIVE_KIND
+    if 4 in counts:
+        return FOUR_KIND
+    if 3 in counts:
+        if 2 in counts:
+            return FULL_HOUSE
+        return THREE_KIND
+    if counts.count(2) == 2:
+        return TWO_PAIR
+    if 2 in counts:
+        return ONE_PAIR
+    return HIGH_CARD
 
 
 def sum_winnings(path):
     sum = 0
     plays = load_plays(path)
-    classify_hand(plays[0]['hand'])
     print(plays)
+    for play in plays:
+        type = classify_hand(play['hand'])
+        print(type)
     return sum
 
 

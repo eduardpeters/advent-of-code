@@ -1,3 +1,6 @@
+from math import sqrt, ceil, floor
+
+
 def get_int_list(string: str):
     return [int(x) for x in string.strip().split(':')[1].strip().split()]
 
@@ -5,7 +8,7 @@ def get_int_list(string: str):
 def get_int_str(string: str):
     number_str = ''
     str_list = [x for x in string.strip().split(':')[1].strip().split()]
-    return number_str.join(str_list)
+    return int(number_str.join(str_list))
 
 
 def load_races(path):
@@ -51,11 +54,19 @@ def get_strategy_product(path):
     return product
 
 
+def solve_quadratic(a, b, c):
+    root_part = sqrt(b**2 - 4 * a * c)
+    root_one = (-1 * b + root_part) / (2 * a)
+    root_two = (-1 * b - root_part) / (2 * a)
+    return (root_one, root_two)
+
+
 def get_root_distance(path):
-    distance = 1
     race = load_single_race(path)
-    print(race)
-    return distance
+    roots = solve_quadratic(-1, race[0], -race[1])
+    lower_limit = ceil(roots[0])
+    upper_limit = floor(roots[1])
+    return upper_limit - lower_limit + 1
 
 
 def solve(path, part):

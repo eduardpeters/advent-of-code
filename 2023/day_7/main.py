@@ -1,6 +1,35 @@
+def load_plays(path):
+    plays = []
+    f = open(path)
+    for line in f:
+        split_line = line.split()
+        plays.append({'hand': list(split_line[0]), 'bet': int(split_line[1])})
+    f.close()
+    return plays
+
+
+def classify_hand(hand):
+    card_counts = {}
+    for card in hand:
+        if card not in card_counts:
+            card_counts[card] = 1
+        else:
+            card_counts[card] += 1
+
+    print(card_counts)
+
+
+def sum_winnings(path):
+    sum = 0
+    plays = load_plays(path)
+    classify_hand(plays[0]['hand'])
+    print(plays)
+    return sum
+
+
 def solve(path, part):
     if part == 1:
-        sum = 0
+        sum = sum_winnings(path)
     else:
         sum = 1
     print(sum)

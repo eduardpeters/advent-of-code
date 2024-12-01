@@ -6,6 +6,11 @@ def solve(path: str, part: int) -> None:
         right_column.sort()
         total = get_total_distance(left_column, right_column)
         print(f"Total Distance: {total}")
+    else:
+        print("Counting and Multiplying")
+        right_counts = get_id_count(right_column)
+        similarity_score = get_similarity_score(left_column, right_counts)
+        print(f"Similarity Score: {similarity_score}")
 
 
 def get_columns_from_file(path: str) -> tuple[list[int], list[int]]:
@@ -19,11 +24,30 @@ def get_columns_from_file(path: str) -> tuple[list[int], list[int]]:
     return left_column, right_column
 
 
+def get_id_count(column: list[int]) -> dict[int, int]:
+    counts: dict[int, int] = {}
+    for id in column:
+        if id in counts:
+            counts[id] += 1
+        else:
+            counts[id] = 1
+    return counts
+
+
 def get_total_distance(left_column: list[int], right_column: list[int]) -> int:
     total = 0
     for a, b in zip(left_column, right_column):
         total += a - b if a > b else b - a
     return total
+
+
+def get_similarity_score(left_column: list[int], right_counts: dict[int, int]) -> int:
+    similarity_score = 0
+    for id in left_column:
+        right_count = right_counts.get(id)
+        if right_count:
+            similarity_score += id * right_count
+    return similarity_score
 
 
 def choose_action():

@@ -6,21 +6,22 @@ def solve(path: str, part: int) -> None:
     print("Getting levels")
     reports = get_reports(path)
     reports = parse_reports(reports)
-    safe_count: int = 0
-    if part == 1:
-        print("Solving without removal")
-        for report in reports:
-            if is_report_safe(report):
-                safe_count += 1
-        print(f"Safe Reports: {safe_count}")
-    else:
+
+    using_damper = part != 1
+    if using_damper:
         print("Solving with Problem Damper")
-        for report in reports:
-            if is_report_safe(report, True):
-                safe_count += 1
-            else:
-                print(f"Unsafe: {report}")
-        print(f"Safe Reports: {safe_count}")
+    else:
+        print("Solving without removal")
+
+    safe_count: int = 0
+
+    for report in reports:
+        if is_report_safe(report, part != 1):
+            safe_count += 1
+        else:
+            print(f"Unsafe: {report}")
+
+    print(f"Safe Reports: {safe_count}")
 
 
 def get_reports(path: str) -> list[str]:
@@ -41,32 +42,30 @@ def report_to_levels(report: str) -> list[int]:
 def is_report_safe(report: list[int], with_damper: bool = False) -> bool:
     report_trend = get_trend(report[0], report[1])
     for i in range(1, len(report)):
+        a, b = report[i - 1], report[i]
         if i != 1:
-            trend = get_trend(report[i - 1], report[i])
+            trend = get_trend(a, b)
             if trend != report_trend:
                 if not with_damper:
                     return False
-                damped_report = report[:i] + report[i + 1 :]
-                if is_report_safe(damped_report):
-                    return True
-                damped_report = report[: i - 1] + report[i:]
-                if is_report_safe(damped_report):
-                    return True
-                damped_report = report[1:]
-                return is_report_safe(damped_report)
-        diff = get_difference(report[i - 1], report[i])
+                return is_damped_report_safe(report, i)
+        diff = get_difference(a, b)
         if diff < 1 or 3 < diff:
             if not with_damper:
                 return False
-            damped_report = report[:i] + report[i + 1 :]
-            if is_report_safe(damped_report):
-                return True
-            damped_report = report[: i - 1] + report[i:]
-            if is_report_safe(damped_report):
-                return True
-            damped_report = report[1:]
-            return is_report_safe(damped_report)
+            return is_damped_report_safe(report, i)
     return True
+
+
+def is_damped_report_safe(report: list[int], current_index: int) -> bool:
+    damped_report = report[:current_index] + report[current_index + 1 :]
+    if is_report_safe(damped_report):
+        return True
+    damped_report = report[: current_index - 1] + report[current_index:]
+    if is_report_safe(damped_report):
+        return True
+    damped_report = report[1:]
+    return is_report_safe(damped_report)
 
 
 def get_trend(a: int, b: int) -> int:

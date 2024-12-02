@@ -39,7 +39,6 @@ def report_to_levels(report: str) -> list[int]:
 
 
 def is_report_safe(report: list[int]) -> bool:
-    print(report)
     report_trend = get_trend(report[0], report[1])
     for i in range(1, len(report)):
         if i != 1:
@@ -62,6 +61,9 @@ def is_report_safe_with_damper(report: list[int]) -> bool:
                 if is_report_safe(damped_report):
                     return True
                 damped_report = report[: i - 1] + report[i:]
+                if is_report_safe(damped_report):
+                    return True
+                damped_report = report[1:]
                 return is_report_safe(damped_report)
         diff = get_difference(report[i - 1], report[i])
         if diff < 1 or 3 < diff:
@@ -69,6 +71,9 @@ def is_report_safe_with_damper(report: list[int]) -> bool:
             if is_report_safe(damped_report):
                 return True
             damped_report = report[: i - 1] + report[i:]
+            if is_report_safe(damped_report):
+                return True
+            damped_report = report[1:]
             return is_report_safe(damped_report)
     return True
 

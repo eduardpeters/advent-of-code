@@ -16,7 +16,7 @@ def solve(path: str, part: int) -> None:
     else:
         print("Solving with Problem Damper")
         for report in reports:
-            if is_report_safe_with_damper(report):
+            if is_report_safe(report, True):
                 safe_count += 1
             else:
                 print(f"Unsafe: {report}")
@@ -38,25 +38,14 @@ def report_to_levels(report: str) -> list[int]:
     return levels
 
 
-def is_report_safe(report: list[int]) -> bool:
+def is_report_safe(report: list[int], with_damper: bool = False) -> bool:
     report_trend = get_trend(report[0], report[1])
     for i in range(1, len(report)):
         if i != 1:
             trend = get_trend(report[i - 1], report[i])
             if trend != report_trend:
-                return False
-        diff = get_difference(report[i - 1], report[i])
-        if diff < 1 or 3 < diff:
-            return False
-    return True
-
-
-def is_report_safe_with_damper(report: list[int]) -> bool:
-    report_trend = get_trend(report[0], report[1])
-    for i in range(1, len(report)):
-        if i != 1:
-            trend = get_trend(report[i - 1], report[i])
-            if trend != report_trend:
+                if not with_damper:
+                    return False
                 damped_report = report[:i] + report[i + 1 :]
                 if is_report_safe(damped_report):
                     return True
@@ -67,6 +56,8 @@ def is_report_safe_with_damper(report: list[int]) -> bool:
                 return is_report_safe(damped_report)
         diff = get_difference(report[i - 1], report[i])
         if diff < 1 or 3 < diff:
+            if not with_damper:
+                return False
             damped_report = report[:i] + report[i + 1 :]
             if is_report_safe(damped_report):
                 return True

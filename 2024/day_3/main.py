@@ -1,8 +1,15 @@
+import re
+
+
 def solve(path: str, part: int) -> None:
     if part == 1:
         file_string = load_file(path)
         potential_matches = get_potential_multiplications(file_string)
-        print(potential_matches)
+        print(f"Potential matches: {len(potential_matches)}")
+        matches = get_valid_multiplications(potential_matches)
+        print(f"Actual matches: {len(matches)}")
+        result = add_multiplications(matches)
+        print(f"Valid multiplications add up to: {result}")
 
 
 def load_file(path: str) -> str:
@@ -16,6 +23,25 @@ def get_potential_multiplications(file_string: str) -> list[str]:
     if not file_string.startswith("mul"):
         split_string = split_string[1:]
     return split_string
+
+
+def get_valid_multiplications(candidates: list[str]) -> list[tuple[int, int]]:
+    valid_arguments: list[tuple[int, int]] = []
+    for candidate in candidates:
+        arguments = re.match("\\((\\d{1,3},\\d{1,3})\\)", candidate)
+        if not arguments:
+            continue
+        match = arguments.group(1)
+        split_arguments = match.split(",")
+        valid_arguments.append((int(split_arguments[0]), int(split_arguments[1])))
+    return valid_arguments
+
+
+def add_multiplications(arguments: list[tuple[int, int]]) -> int:
+    total = 0
+    for pair in arguments:
+        total += pair[0] * pair[1]
+    return total
 
 
 def choose_action():

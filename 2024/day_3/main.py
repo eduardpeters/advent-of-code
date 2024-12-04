@@ -2,20 +2,35 @@ import re
 
 
 def solve(path: str, part: int) -> None:
+    file_string = load_file(path)
     if part == 1:
-        file_string = load_file(path)
         potential_matches = get_potential_multiplications(file_string)
-        print(f"Potential matches: {len(potential_matches)}")
-        matches = get_valid_multiplications(potential_matches)
-        print(f"Actual matches: {len(matches)}")
-        result = add_multiplications(matches)
-        print(f"Valid multiplications add up to: {result}")
+    else:
+        do_string = get_do_instructions(file_string)
+        potential_matches = get_potential_multiplications(do_string)
+
+    print(f"Potential matches: {len(potential_matches)}")
+    matches = get_valid_multiplications(potential_matches)
+    print(f"Actual matches: {len(matches)}")
+    result = add_multiplications(matches)
+    print(f"Valid multiplications add up to: {result}")
 
 
 def load_file(path: str) -> str:
     with open(path) as file:
         file_string = file.read()
     return file_string
+
+
+def get_do_instructions(file_string: str) -> str:
+    split = file_string.split("do()")
+
+    do_instructions: list[str] = []
+    for string in split:
+        re_split = string.split("don't()")
+        do_instructions.append(re_split[0])
+
+    return "".join(do_instructions)
 
 
 def get_potential_multiplications(file_string: str) -> list[str]:

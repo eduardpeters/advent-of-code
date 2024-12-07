@@ -1,3 +1,11 @@
+X........S
+M........A
+A........M
+S........X
+X........X
+.M......M.
+..A....A..
+...S..S...
 MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
@@ -8,3 +16,10 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX
+..........
+SAMX......
+......XMAS
+X........X
+.M......M.
+..A....A..
+...S..S...

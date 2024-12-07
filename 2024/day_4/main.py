@@ -3,7 +3,7 @@ XMAS = "XMAS"
 
 def solve(path: str, part: int) -> None:
     letters = load_file(path)
-    print(letters)
+    print(len(letters), len(letters[0]))
     if part == 1:
         print("Solving for part 1")
         xmas_count = count_xmas(letters)
@@ -26,7 +26,6 @@ def count_square(letters: list[list[str]], row: int, column: int, word: str) -> 
     if letters[row][column] != word[0]:
         return 0
 
-    # print(f"Entering recursion at ({row, column})={letters[row][column]} for {word}")
     count = 0
     look_behind, look_forward, look_above, look_below = check_bounds(
         letters, row, column, len(word)
@@ -78,7 +77,7 @@ def check_bounds(
     letters: list[list[str]], row: int, column: int, word_length: int
 ) -> tuple[int, int, int, int]:
     row_count = len(letters)
-    column_count = len(letters[column])
+    column_count = len(letters[row])
 
     look_behind = column >= word_length - 1
     look_forward = column + word_length - 1 < column_count

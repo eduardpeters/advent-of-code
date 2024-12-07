@@ -10,6 +10,53 @@ def solve(path: str, part: int) -> None:
         print(f"Found XMAS {xmas_count} times")
     else:
         print("Solving for part 2")
+        xmas_count = count_cross_mas(letters)
+        print(f"Found X-MAS {xmas_count} times")
+
+
+def count_cross_mas(letters: list[list[str]]):
+    count = 0
+    for i_row, row in enumerate(letters):
+        for i_col, _ in enumerate(row):
+            count += 1 if count_cross(letters, i_row, i_col, XMAS[1:]) else 0
+    return count
+
+
+def count_cross(letters: list[list[str]], row: int, column: int, word: str) -> bool:
+    if letters[row][column] != word[len(word) // 2]:
+        return False
+
+    if not check_cross_bounds(letters, row, column, word):
+        return False
+
+    # print(f"Potential match at ({row},{column})")
+    down_diagonal = f"{letters[row - 1][column - 1]}{letters[row][column]}{letters[row + 1][column + 1]}"
+    up_diagonal = f"{letters[row + 1][column - 1]}{letters[row][column]}{letters[row - 1][column + 1]}"
+    if down_diagonal != word and down_diagonal[::-1] != word:
+        return False
+    if up_diagonal != word and up_diagonal[::-1] != word:
+        return False
+
+    return True
+
+
+def check_cross_bounds(
+    letters: list[list[str]], row: int, column: int, word: str
+) -> bool:
+    row_count = len(letters)
+    column_count = len(letters[row])
+    cross_arm_length = len(word) // 2
+
+    if column < cross_arm_length:
+        return False
+    if column + cross_arm_length >= column_count:
+        return False
+    if row < cross_arm_length:
+        return False
+    if row + cross_arm_length >= row_count:
+        return False
+
+    return True
 
 
 def count_xmas(letters: list[list[str]]):
@@ -21,8 +68,6 @@ def count_xmas(letters: list[list[str]]):
 
 
 def count_square(letters: list[list[str]], row: int, column: int, word: str) -> int:
-    if not word:
-        return 1
     if letters[row][column] != word[0]:
         return 0
 

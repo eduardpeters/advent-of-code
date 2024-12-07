@@ -34,10 +34,25 @@ def count_square(letters: list[list[str]], row: int, column: int, word: str) -> 
 
     word_slice = word[1:]
 
+    # Search in straight lines
     if look_behind:
         count += count_line(letters, row, column - 1, 0, -1, word_slice)
     if look_forward:
         count += count_line(letters, row, column + 1, 0, 1, word_slice)
+    if look_above:
+        count += count_line(letters, row - 1, column, -1, 0, word_slice)
+    if look_below:
+        count += count_line(letters, row + 1, column, 1, 0, word_slice)
+
+    # Search in diagonals
+    if look_behind and look_above:
+        count += count_line(letters, row - 1, column - 1, -1, -1, word_slice)
+    if look_behind and look_below:
+        count += count_line(letters, row + 1, column - 1, 1, -1, word_slice)
+    if look_forward and look_above:
+        count += count_line(letters, row - 1, column + 1, -1, 1, word_slice)
+    if look_forward and look_below:
+        count += count_line(letters, row + 1, column + 1, 1, 1, word_slice)
 
     return count
 

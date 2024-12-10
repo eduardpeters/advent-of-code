@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
 from enum import Enum
+from math import log10
 
 
 class Operation(Enum):
     SUM = 0
     MULTIPLY = 1
+    CONCATENATE = 2
 
 
 @dataclass
@@ -14,37 +16,54 @@ class Equation(object):
     operators: list[Operation] = field(default_factory=list)
 
     def apply_operations(self) -> int:
-        # print(f"Testing {self.operands} with {self.operators}")
         result = self.operands[0]
         i = 1
         for operator in self.operators:
             next_operand = self.operands[i]
             if operator == Operation.SUM:
                 result += next_operand
-            else:
+            elif operator == Operation.MULTIPLY:
                 result *= next_operand
+            else:
+                shift_size = self._count_digits(next_operand)
+                result *= 10**shift_size
+                result += next_operand
             i += 1
-        # print(f"Result: {result}")
         return result
+
+    def _count_digits(self, number: int) -> int:
+        if number > 0:
+            digits = int(log10(number)) + 1
+        elif number == 0:
+            digits = 1
+        else:
+            digits = int(log10(-number)) + 1
+
+        return digits
 
 
 def solve(path: str, part: int) -> None:
     equations = load_file(path)
-    # print(equations)
+    print(f"Iterating over {len(equations)} equations...")
     if part == 1:
         print("Solving for part 1")
-        print(f"Iterating over {len(equations)} equations...")
         total = 0
         for equation in equations:
-            # print(f"Testing: {equation}")
-            if is_valid_equation(equation):
+            print(f"Testing: {equation}")
+            if is_valid_equation(equation, can_concatenate=False):
                 total += equation.result
         print(f"Total: {total}")
     else:
         print("Solving for part 2")
+        total = 0
+        for equation in equations:
+            print(f"Testing: {equation}")
+            if is_valid_equation(equation, can_concatenate=True):
+                total += equation.result
+        print(f"Total: {total}")
 
 
-def is_valid_equation(equation: Equation) -> bool:
+def is_valid_equation(equation: Equation, can_concatenate: bool) -> bool:
     if len(equation.operators) >= len(equation.operands):
         return False
     if len(equation.operators) == len(equation.operands) - 1:
@@ -53,11 +72,16 @@ def is_valid_equation(equation: Equation) -> bool:
 
     operators_copy = [operator for operator in equation.operators]
     equation.operators.append(Operation.SUM)
-    if is_valid_equation(equation):
+    if is_valid_equation(equation, can_concatenate):
         return True
 
+    if can_concatenate:
+        equation.operators = [*operators_copy, Operation.CONCATENATE]
+        if is_valid_equation(equation, can_concatenate):
+            return True
+
     equation.operators = [*operators_copy, Operation.MULTIPLY]
-    return is_valid_equation(equation)
+    return is_valid_equation(equation, can_concatenate)
 
 
 def load_file(path: str) -> list[Equation]:

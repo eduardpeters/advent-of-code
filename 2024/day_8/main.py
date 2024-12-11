@@ -43,59 +43,75 @@ def find_matching_antennae_nodes(
                 if with_harmonics:
                     # Add matching antenna positions
                     antinodes.extend([starting_position, (row, column)])
-                candidates = get_antinode_candidates(
-                    area, starting_position, row, column, with_harmonics
-                )
-                for candidate in candidates:
-                    if is_inside_bounds(area, candidate):
-                        antinodes.append(candidate)
+                    new_antinodes = get_harmonics_antennae_antinodes(
+                        area, starting_position, (row, column)
+                    )
+                else:
+                    new_antinodes = get_antennae_antinodes(
+                        area, starting_position, (row, column)
+                    )
+                antinodes.extend(new_antinodes)
 
     return antinodes
 
 
-def get_antinode_candidates(
+def get_harmonics_antennae_antinodes(
     area: list[list[str]],
     starting_position: tuple[int, int],
-    current_row: int,
-    current_column: int,
-    with_harmonics: bool,
+    current_position: tuple[int, int],
 ) -> list[tuple[int, int]]:
-    row_difference = current_row - starting_position[0]
-    column_difference = current_column - starting_position[1]
-    if with_harmonics:
-        candidates: list[tuple[int, int]] = []
-        iterations = 1
-        while True:
-            new_antinode = (
-                starting_position[0] - row_difference * iterations,
-                starting_position[1] - column_difference * iterations,
-            )
-            if not is_inside_bounds(area, new_antinode):
-                break
-            candidates.append(new_antinode)
-            iterations += 1
-        iterations = 1
-        while True:
-            new_antinode = (
-                starting_position[0] + row_difference * iterations,
-                starting_position[1] + column_difference * iterations,
-            )
-            if not is_inside_bounds(area, new_antinode):
-                break
-            candidates.append(new_antinode)
-            iterations += 1
-    else:
-        candidate_one = (
-            starting_position[0] - row_difference,
-            starting_position[1] - column_difference,
+    row_difference = current_position[0] - starting_position[0]
+    column_difference = current_position[1] - starting_position[1]
+
+    candidates: list[tuple[int, int]] = []
+    iterations = 1
+
+    while True:
+        new_antinode = (
+            starting_position[0] - row_difference * iterations,
+            starting_position[1] - column_difference * iterations,
         )
-        candidate_two = (
-            current_row + row_difference,
-            current_column + column_difference,
+        if not is_inside_bounds(area, new_antinode):
+            break
+        candidates.append(new_antinode)
+        iterations += 1
+    iterations = 1
+    while True:
+        new_antinode = (
+            current_position[0] + row_difference * iterations,
+            current_position[1] + column_difference * iterations,
         )
-        candidates = [candidate_one, candidate_two]
+        if not is_inside_bounds(area, new_antinode):
+            break
+        candidates.append(new_antinode)
+        iterations += 1
 
     return candidates
+
+
+def get_antennae_antinodes(
+    area: list[list[str]],
+    starting_position: tuple[int, int],
+    current_position: tuple[int, int],
+) -> list[tuple[int, int]]:
+    row_difference = current_position[0] - starting_position[0]
+    column_difference = current_position[1] - starting_position[1]
+
+    candidate_one = (
+        starting_position[0] - row_difference,
+        starting_position[1] - column_difference,
+    )
+    candidate_two = (
+        current_position[0] + row_difference,
+        current_position[1] + column_difference,
+    )
+
+    antinodes: list[tuple[int, int]] = []
+    for candidate in [candidate_one, candidate_two]:
+        if is_inside_bounds(area, candidate):
+            antinodes.append(candidate)
+
+    return antinodes
 
 
 def is_inside_bounds(area: list[list[str]], antinode: tuple[int, int]) -> bool:

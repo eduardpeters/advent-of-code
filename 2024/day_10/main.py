@@ -10,16 +10,18 @@ def solve(path: str, part: int) -> None:
         print(f"Trailhead total score {trailheads_score}")
     else:
         print("Solving for part 2")
+        trailheads_rating = count_trailheads(map, use_rating=True)
+        print(f"Trailhead total rating {trailheads_rating}")
 
 
-def count_trailheads(map: list[list[int]]) -> int:
+def count_trailheads(map: list[list[int]], use_rating: bool = False) -> int:
     total_score: int = 0
     for y in range(0, len(map)):
         for x in range(0, len(map[y])):
             current_height = map[y][x]
             if current_height == LOWEST_HEIGHT:
                 score: int = 0
-                visited: set[tuple[int, int]] = set()
+                visited: set[tuple[int, int]] | None = None if use_rating else set()
                 # Check above
                 direction_score, visited = traverse_trailhead(
                     map, y - 1, x, LOWEST_HEIGHT + 1, visited
@@ -49,8 +51,8 @@ def traverse_trailhead(
     current_y: int,
     current_x: int,
     next_height: int,
-    visited: set[tuple[int, int]],
-) -> tuple[int, set[tuple[int, int]]]:
+    visited: set[tuple[int, int]] | None,
+) -> tuple[int, set[tuple[int, int]] | None]:
     if current_y < 0 or len(map) <= current_y:
         return 0, visited
     if current_x < 0 or len(map[current_y]) <= current_x:
@@ -60,8 +62,13 @@ def traverse_trailhead(
     if current_height != next_height:
         return 0, visited
 
-    if current_height == HIGHEST_HEIGHT and (current_y, current_x) not in visited:
-        visited.add((current_y, current_x))
+    if current_height == HIGHEST_HEIGHT:
+        if visited is not None:
+            current_position = (current_y, current_x)
+            if current_position in visited:
+                return 0, visited
+            else:
+                visited.add(current_position)
         return 1, visited
 
     count: int = 0

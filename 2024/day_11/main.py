@@ -7,33 +7,41 @@ def solve(path: str, part: int) -> None:
     if part == 1:
         print("Solving for part 1")
         blinks = 25
-        count = count_after_blinks(stones, blinks)
-        print(f"Stones after {blinks} blinks: {count}")
     else:
         print("Solving for part 2")
+        blinks = 75
+    count = count_after_blinks(stones, blinks)
+    print(f"Stones after {blinks} blinks: {count}")
 
 
 def count_after_blinks(stones: list[int], n_blinks: int) -> int:
-    current_stones = stones
-    for _ in range(n_blinks):
-        new_stones: list[int] = []
-        for stone in current_stones:
-            blink_result = blink(stone)
-            new_stones.extend(blink_result)
-        current_stones = new_stones
-    return len(current_stones)
+    total_count: int = 0
+    for stone in stones:
+        new_count = blink(stone, n_blinks)
+        total_count += new_count
+    return total_count
 
 
-def blink(stone: int) -> list[int]:
-    if stone == 0:
-        return [1]
+cache: dict[tuple[int, int], int] = {}
+
+
+def blink(stone: int, n_blinks: int) -> int:
     digits = count_digits(stone)
-    if digits % 2 == 0:
+    if n_blinks == 0:
+        return 1
+    elif (stone, n_blinks) in cache:
+        return cache[(stone, n_blinks)]
+    elif stone == 0:
+        count = blink(1, n_blinks - 1)
+    elif digits % 2 == 0:
         factor = 10 ** (digits // 2)
         left_split = stone // factor
         right_split = stone - left_split * factor
-        return [left_split, right_split]
-    return [stone * 2024]
+        count = blink(left_split, n_blinks - 1) + blink(right_split, n_blinks - 1)
+    else:
+        count = blink(stone * 2024, n_blinks - 1)
+    cache[(stone, n_blinks)] = count
+    return count
 
 
 def count_digits(number: int) -> int:

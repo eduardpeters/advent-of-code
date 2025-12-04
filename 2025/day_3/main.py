@@ -28,6 +28,11 @@ def get_bank_joltage_dozen(bank: str) -> int:
                 for idx in range(len(indexes[current_index:])):
                     indexes[current_index + idx] = i + idx
             i += 1
+
+        # Exit early if all remaining batteries needed complete dozen
+        if indexes[current_index] >= len(batteries) - len(indexes) + current_index:
+            break
+
         current_index += 1
 
     return int("".join([str(batteries[idx]) for idx in indexes]))

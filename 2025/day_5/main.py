@@ -45,12 +45,12 @@ def solve(path: str, part: int) -> None:
     print("fresh", len(fresh_ranges))
     print("available", len(available_ingredients))
 
+    fresh_ranges = merge_fresh_ranges(fresh_ranges)
+    print("merged", len(fresh_ranges))
+
     if part == 1:
         print("Solving for part 1")
-        fresh_ranges = merge_fresh_ranges(fresh_ranges)
         fresh_ranges.sort(key=lambda fr: fr[0])
-        print("merged", len(fresh_ranges))
-
         fresh_available_count = 0
         for ingredient in available_ingredients:
             if ingredient < fresh_ranges[0][0] or ingredient > fresh_ranges[-1][1]:
@@ -65,6 +65,11 @@ def solve(path: str, part: int) -> None:
 
     else:
         print("Solving for part 2")
+        fresh_possible_count = 0
+        for fresh_range in fresh_ranges:
+            fresh_possible_count += fresh_range[1] - fresh_range[0] + 1
+
+        print(f"Fresh ingredient IDs: {fresh_possible_count}")
 
 
 def load_file(path: str) -> tuple[list[tuple[int, int]], list[int]]:

@@ -1,4 +1,5 @@
 EMPTY = "."
+CLEARED = "x"
 ROLL = "@"
 MOVABLE_THRESHOLD = 4
 
@@ -50,6 +51,25 @@ def solve(path: str, part: int) -> None:
         print(f"Movable count: {movable_count}")
     else:
         print("Solving for part 2")
+        removed_count = 0
+        row = 1
+        while row < len(map) - 1:
+            column = 1
+            while column < len(map[row]) - 1:
+                if map[row][column] == ROLL:
+                    surrounding_count = count_surrounding(map, row, column)
+                    if surrounding_count < MOVABLE_THRESHOLD:
+                        # Remove from grid
+                        map[row] = map[row][:column] + CLEARED + map[row][column + 1 :]
+                        removed_count += 1
+                        # Go back to previous row and clear any newly available
+                        row -= 2
+                        break
+                column += 1
+
+            row += 1
+
+        print(f"Removed count: {removed_count}")
 
 
 def load_file(path: str) -> list[str]:

@@ -7,9 +7,17 @@ def overlaps(a: tuple[int, int], b: tuple[int, int]) -> bool:
 
 
 def merge(a: tuple[int, int], b: tuple[int, int]) -> tuple[int, int]:
-    if a[0] < b[0]:
-        return (a[0], b[1])
-    return (b[0], a[1])
+    if a[0] <= b[0]:
+        lower = a[0]
+    else:
+        lower = b[0]
+
+    if a[1] >= b[1]:
+        higher = a[1]
+    else:
+        higher = b[1]
+
+    return (lower, higher)
 
 
 def is_contained(range: tuple[int, int], value: int) -> bool:
@@ -39,12 +47,15 @@ def solve(path: str, part: int) -> None:
 
     if part == 1:
         print("Solving for part 1")
-        print("merged", len(fresh_ranges))
+        fresh_ranges = merge_fresh_ranges(fresh_ranges)
         fresh_ranges.sort(key=lambda fr: fr[0])
+        print("merged", len(fresh_ranges))
+
         fresh_available_count = 0
         for ingredient in available_ingredients:
             if ingredient < fresh_ranges[0][0] or ingredient > fresh_ranges[-1][1]:
                 continue
+
             for fresh_range in fresh_ranges:
                 if is_contained(fresh_range, ingredient):
                     fresh_available_count += 1

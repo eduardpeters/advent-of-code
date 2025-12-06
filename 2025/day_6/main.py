@@ -2,7 +2,18 @@ ADD = "+"
 MULTIPLY = "*"
 
 
+def solve_problem(numbers: list[int], operator: str) -> int:
+    result = 0 if operator == ADD else 1
+    for number in numbers:
+        if operator == ADD:
+            result += number
+        else:
+            result *= number
+    return result
+
+
 def load_raw_file_reversed(path: str) -> list[str]:
+    # Remove newlines and reverse in-line order to read right to left
     lines: list[str] = []
     with open(path) as file:
         for line in file:
@@ -11,26 +22,17 @@ def load_raw_file_reversed(path: str) -> list[str]:
 
 
 def solve(path: str, part: int) -> None:
+    grand_total = 0
     if part == 1:
         print("Solving for part 1")
         numbers, operators = load_file(path)
-        grand_total = 0
-        problem = 0
-        while problem < len(numbers):
-            op = operators[problem]
-            result = 0 if op == ADD else 1
-            for number in numbers[problem]:
-                if op == ADD:
-                    result += number
-                else:
-                    result *= number
-
-            grand_total += result
-            problem += 1
-
-        print(f"Grand Total: {grand_total}")
+        problem_idx = 0
+        while problem_idx < len(numbers):
+            grand_total += solve_problem(numbers[problem_idx], operators[problem_idx])
+            problem_idx += 1
     else:
         print("Solving for part 2")
+        # Cannot use lines as they are, need custom parsing
         lines = load_raw_file_reversed(path)
         numbers: list[list[int]] = []
         operators: list[str] = []
@@ -40,9 +42,11 @@ def solve(path: str, part: int) -> None:
         # Extract operators
         for op in lines[-1].strip().split():
             operators.append(op)
+        # Fill each problem taking into account that column width is always fixed
         problem_idx = 0
         n_columns = len(lines[0])
         for c in range(n_columns):
+            # If after checking all lines we never found a number it means we have completed a problem set
             column_has_number = False
             current_number = 0
             for line in lines[:-1]:
@@ -50,26 +54,20 @@ def solve(path: str, part: int) -> None:
                 if current_char == " ":
                     continue
                 column_has_number = True
+                # Reading top to bottom, each digit adds an order of magnitude
                 current_number = current_number * 10 + int(current_char)
             if column_has_number:
                 numbers[problem_idx].append(current_number)
             else:
+                # No numbers in this column, is the problem set boundary
                 problem_idx += 1
-        grand_total = 0
+
         problem_idx = 0
         while problem_idx < len(numbers):
-            op = operators[problem_idx]
-            result = 0 if op == ADD else 1
-            for number in numbers[problem_idx]:
-                if op == ADD:
-                    result += number
-                else:
-                    result *= number
-
-            grand_total += result
+            grand_total += solve_problem(numbers[problem_idx], operators[problem_idx])
             problem_idx += 1
 
-        print(f"Grand Total: {grand_total}")
+    print(f"Grand Total: {grand_total}")
 
 
 def load_file(path: str) -> tuple[list[list[int]], list[str]]:

@@ -4,6 +4,45 @@ SPLITTER = "^"
 TACHYON = "|"
 
 
+def accumulate(
+    grid: list[list[int | str]], target_row: int, target_column: int, accumulated: int
+):
+    if grid[target_row][target_column] == FREE:
+        grid[target_row][target_column] = accumulated
+    else:
+        grid[target_row][target_column] += accumulated  # type: ignore If not empty, must be accumulator
+
+
+def count_paths(grid: list[list[str | int]], start_column: int) -> int:
+    # Initialize accumulator in grid
+    grid[0][start_column] = 1
+    row = 0
+    while row < len(grid) - 1:
+        column = 0
+        while column < len(grid[row]):
+            if grid[row][column] == FREE or grid[row][column] == SPLITTER:
+                column += 1
+                continue
+            # Push paths down
+            acc_paths: int = grid[row][column]  # type: ignore If not empty, must be accumulator
+            if grid[row + 1][column] == SPLITTER:
+                # Go down left
+                accumulate(grid, row + 1, column - 1, acc_paths)
+                # Go down right
+                accumulate(grid, row + 1, column + 1, acc_paths)
+            else:
+                accumulate(grid, row + 1, column, acc_paths)
+            column += 1
+        row += 1
+
+    # Add up accumulated paths
+    paths: int = 0
+    for position in grid[-1]:
+        if position != FREE:
+            paths += position  # type: ignore If not empty, must be accumulator
+    return paths  # type: ignore Can only be int
+
+
 def count_splits(grid: list[list[str]], t_row: int, t_column: int) -> int:
     # Out of Bounds, no splitting can occur and no further travel possible
     if t_row < 0 or t_row >= len(grid) or t_column < 0 or t_column >= len(grid[t_row]):
@@ -31,15 +70,18 @@ def count_splits(grid: list[list[str]], t_row: int, t_column: int) -> int:
 def solve(path: str, part: int) -> None:
     grid = load_file(path)
 
+    start_column = grid[0].index(START)
+    start_row = 1
     if part == 1:
         print("Solving for part 1")
-        start_column = grid[0].index(START)
-        start_row = 1
         print(f"Starting tachyon tracking on column {start_column}")
         split_count = count_splits(grid, start_row, start_column)
-        print(f"Trachyon split {split_count} times!")
+        print(f"Tachyon split {split_count} times!")
     else:
         print("Solving for part 2")
+        print(f"Starting tachyon tracking on column {start_column}")
+        path_count = count_paths(grid, start_column)  # type: ignore need flexible typing to avoid rewriting whole grid to ints
+        print(f"Tachyon paths: {path_count}")
 
 
 def load_file(path: str) -> list[list[str]]:

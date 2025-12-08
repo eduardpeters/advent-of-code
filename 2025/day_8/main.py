@@ -54,9 +54,9 @@ def build_graphs(
     return graphs
 
 
-def get_shortest_connections(
-    boxes: list[tuple[int, int, int]], n_connections: int
-) -> list[tuple[tuple[int, int, int], tuple[int, int, int]]]:
+def get_sorted_connection_data(
+    boxes: list[tuple[int, int, int]],
+) -> list[dict[str, Any]]:
     pairs_to_connect: list[dict[str, Any]] = []
     for i, box in enumerate(boxes):
         for pair in boxes[i + 1 :]:
@@ -68,6 +68,13 @@ def get_shortest_connections(
             }
             pairs_to_connect.append(entry)
     pairs_to_connect.sort(key=lambda p: p["distance"])
+    return pairs_to_connect
+
+
+def get_shortest_connections(
+    boxes: list[tuple[int, int, int]], n_connections: int
+) -> list[tuple[tuple[int, int, int], tuple[int, int, int]]]:
+    pairs_to_connect = get_sorted_connection_data(boxes)
 
     shortest_pairs: list[tuple[tuple[int, int, int], tuple[int, int, int]]] = []
     for n in range(n_connections):
@@ -75,6 +82,14 @@ def get_shortest_connections(
         shortest_pairs.append((pair_data["box_1"], pair_data["box_2"]))
 
     return shortest_pairs
+
+
+def get_sorted_connections(
+    boxes: list[tuple[int, int, int]],
+) -> list[tuple[tuple[int, int, int], tuple[int, int, int]]]:
+    return [
+        (data["box_1"], data["box_2"]) for data in get_sorted_connection_data(boxes)
+    ]
 
 
 def distance(p1: tuple[int, int, int], p2: tuple[int, int, int]) -> float:
@@ -108,6 +123,17 @@ def solve(path: str, part: int) -> None:
         )
     else:
         print("Solving for part 2")
+        remaining_boxes = set(boxes)
+        pairs_to_connect = get_sorted_connections(boxes)
+        for pair in pairs_to_connect:
+            if pair[0] in remaining_boxes:
+                remaining_boxes.remove(pair[0])
+            if pair[1] in remaining_boxes:
+                remaining_boxes.remove(pair[1])
+            if not len(remaining_boxes):
+                print(f"Last connected boxes: {pair}")
+                print(f"X Coordinates product: {pair[0][0] * pair[1][0]}")
+                break
 
 
 def load_file(path: str) -> list[tuple[int, int, int]]:

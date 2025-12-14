@@ -8,77 +8,93 @@ OUT_NODE = "out"
 def paths_to_goal(
     goal: str,
     map: dict[str, list[str]],
-    visited: set[str],
     known_paths: dict[str, int],
     current: str,
 ) -> int:
-    print(f"Current: {current}")
-    print(f"Visited? {current in visited}")
-    print(f"Known path? {known_paths.get(current)}")
     if current == goal:
         return 1
     if current in known_paths:
+        if known_paths[current] == -1:
+            # We have entered a loop, cannot reach goal
+            return 0
         return known_paths[current]
-    if current in visited:
-        return 0
-    visited.add(current)
-    connections = map[current]
+
+    connections = map.get(current, [])
     paths = 0
+    # Register we have traversed the node, even if unclear if any paths lead to goal
+    known_paths[current] = -1
     for conn in connections:
-        new_visited = visited.copy()
-        conn_paths = paths_to_goal(goal, map, new_visited, known_paths, conn)
+        conn_paths = paths_to_goal(goal, map, known_paths, conn)
         paths += conn_paths
         known_paths[conn] = conn_paths
     known_paths[current] = paths
+
     return paths
 
 
-def paths_to_goal_through_midpoint(
+def paths_to_goal_through_midpoints(
     goal: str,
-    midpoint: str,
+    midpoints: list[str],
     map: dict[str, list[str]],
-    visited: set[str],
+    known_paths: dict[tuple[str, str], int],
     current: str,
 ) -> int:
-    print(current, len(visited))
-    if current in visited:
-        return 0
     if current == goal:
-        if midpoint in visited:
+        if not midpoints:
             return 1
         return 0
-    visited.add(current)
-    connections = map[current]
+    if (current, str(midpoints)) in known_paths:
+        return known_paths[(current, str(midpoints))]
+
+    connections = map.get(current, [])
     paths = 0
+    # Update pending midpoints to traverse
+    next_midpoints = midpoints
+    if next_midpoints:
+        # If we have reached the next midpoint, elminate from list
+        if current == next_midpoints[0]:
+            if len(next_midpoints) >= 1:
+                next_midpoints = midpoints[1:]
+            else:
+                next_midpoints = []
+
     for conn in connections:
-        new_visited = visited.copy()
-        conn_paths = paths_to_goal_through_midpoint(
-            goal, midpoint, map, new_visited, conn
+        conn_paths = paths_to_goal_through_midpoints(
+            goal, next_midpoints, map, known_paths, conn
         )
         paths += conn_paths
+        known_paths[(conn, str(next_midpoints))] = conn_paths
+    known_paths[(current, str(midpoints))] = paths
+
     return paths
 
 
 def solve(path: str, part: int) -> None:
     node_map = load_file(path)
 
-    # print(node_map)
-
     if part == 1:
         print("Solving for part 1")
-        paths = paths_to_goal(OUT_NODE, node_map, set(), {}, YOU_NODE)
+        paths = paths_to_goal(OUT_NODE, node_map, {}, YOU_NODE)
         print(f"Paths: {paths}")
     else:
         print("Solving for part 2")
         paths = 0
-        paths_from_svr_to_fft = paths_to_goal(
-            FFT_NODE, node_map, {DAC_NODE}, {DAC_NODE: 0}, SVR_NODE
-        )
-        print(f"Paths from SVR to FFT, no DAC: {paths_from_svr_to_fft}")
-        paths_from_fft_with_dac = paths_to_goal_through_midpoint(
-            OUT_NODE, DAC_NODE, node_map, set(), FFT_NODE
-        )
-        print(f"Paths from FFT through DAC to OUT: {paths_from_fft_with_dac}")
+
+        paths_from_fft_to_dac = paths_to_goal(DAC_NODE, node_map, {}, FFT_NODE)
+        print(f"Paths from FFT to DAC: {paths_from_fft_to_dac}")
+        paths_from_dac_to_fft = paths_to_goal(FFT_NODE, node_map, {}, DAC_NODE)
+        print(f"Paths from DAC to FFT: {paths_from_dac_to_fft}")
+
+        if paths_from_fft_to_dac > 0:
+            print("Path is through FFT and DAC")
+            paths = paths_to_goal_through_midpoints(
+                OUT_NODE, [FFT_NODE, DAC_NODE], node_map, {}, SVR_NODE
+            )
+        else:
+            print("Path is through DAC and FFT")
+            paths = paths_to_goal_through_midpoints(
+                OUT_NODE, [DAC_NODE, FFT_NODE], node_map, {}, SVR_NODE
+            )
 
     print(f"Paths: {paths}")
 

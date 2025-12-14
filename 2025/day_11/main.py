@@ -1,18 +1,61 @@
-STARTING_NODE = "you"
-GOAL_NODE = "out"
+YOU_NODE = "you"
+SVR_NODE = "svr"
+DAC_NODE = "dac"
+FFT_NODE = "fft"
+OUT_NODE = "out"
 
 
-def paths_to_goal(map: dict[str, list[str]], visited: set[str], current: str) -> int:
+def paths_to_goal(
+    goal: str,
+    map: dict[str, list[str]],
+    visited: set[str],
+    known_paths: dict[str, int],
+    current: str,
+) -> int:
+    print(f"Current: {current}")
+    print(f"Visited? {current in visited}")
+    print(f"Known path? {known_paths.get(current)}")
+    if current == goal:
+        return 1
+    if current in known_paths:
+        return known_paths[current]
     if current in visited:
         return 0
-    if current == GOAL_NODE:
-        return 1
     visited.add(current)
     connections = map[current]
     paths = 0
     for conn in connections:
         new_visited = visited.copy()
-        paths += paths_to_goal(map, new_visited, conn)
+        conn_paths = paths_to_goal(goal, map, new_visited, known_paths, conn)
+        paths += conn_paths
+        known_paths[conn] = conn_paths
+    known_paths[current] = paths
+    return paths
+
+
+def paths_to_goal_through_midpoint(
+    goal: str,
+    midpoint: str,
+    map: dict[str, list[str]],
+    visited: set[str],
+    current: str,
+) -> int:
+    print(current, len(visited))
+    if current in visited:
+        return 0
+    if current == goal:
+        if midpoint in visited:
+            return 1
+        return 0
+    visited.add(current)
+    connections = map[current]
+    paths = 0
+    for conn in connections:
+        new_visited = visited.copy()
+        conn_paths = paths_to_goal_through_midpoint(
+            goal, midpoint, map, new_visited, conn
+        )
+        paths += conn_paths
     return paths
 
 
@@ -23,10 +66,21 @@ def solve(path: str, part: int) -> None:
 
     if part == 1:
         print("Solving for part 1")
-        paths = paths_to_goal(node_map, set(), STARTING_NODE)
+        paths = paths_to_goal(OUT_NODE, node_map, set(), {}, YOU_NODE)
         print(f"Paths: {paths}")
     else:
         print("Solving for part 2")
+        paths = 0
+        paths_from_svr_to_fft = paths_to_goal(
+            FFT_NODE, node_map, {DAC_NODE}, {DAC_NODE: 0}, SVR_NODE
+        )
+        print(f"Paths from SVR to FFT, no DAC: {paths_from_svr_to_fft}")
+        paths_from_fft_with_dac = paths_to_goal_through_midpoint(
+            OUT_NODE, DAC_NODE, node_map, set(), FFT_NODE
+        )
+        print(f"Paths from FFT through DAC to OUT: {paths_from_fft_with_dac}")
+
+    print(f"Paths: {paths}")
 
 
 def load_file(path: str) -> dict[str, list[str]]:
@@ -53,7 +107,7 @@ def choose_action():
         solve("input.txt", 1)
     elif choice == 2:
         print("Running example part 2")
-        solve("example.txt", 2)
+        solve("example_2.txt", 2)
     else:
         print("Running input part 2")
         solve("input.txt", 2)

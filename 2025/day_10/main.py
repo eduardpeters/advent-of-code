@@ -1,5 +1,5 @@
-import copy
-import numpy as np
+from functools import cache
+from itertools import combinations
 
 ON = 1
 OFF = 0
@@ -53,278 +53,35 @@ def toggle_indicator_lights(goal: list[int], buttons: list[list[int]]) -> int:
     return presses
 
 
-def print_matrix(matrix: list[np.ndarray], title: str = ""):
-    print(title)
-    for row in matrix:
-        print(row)
-
-
-def apply_joltage(joltage: list[int], button: list[int]) -> list[int]:
-    for idx in button:
-        joltage[idx] += 1
-    return joltage
-
-
-def has_overjoltage(goal: list[int], joltage: list[int]) -> bool:
-    for goal_joltage, current_joltage in zip(goal, joltage):
-        if current_joltage > goal_joltage:
-            return True
-    return False
-
-
-def build_matrix(goal: list[int], buttons: list[list[int]]) -> list[np.ndarray]:
-    equations = [np.array([0 for _ in buttons]) for _ in goal]
-    for e_idx, equation in enumerate(equations):
-        for b_idx, button in enumerate(buttons):
-            for idx in button:
-                if idx != e_idx:
-                    continue
-                equation[b_idx] = 1
-    result = np.array(goal)
-    matrix: list[np.ndarray] = []
-    for equation, result in zip(equations, result):
-        row = np.append(equation, result)
-        matrix.append(row)
-
-    return matrix
-
-
-def matrix_elimination(matrix: list[np.ndarray]) -> list[np.ndarray]:
-    for idx in range(min(len(matrix), len(matrix[0]))):
-        if matrix[idx][idx] == 0:
-            best_swap_row = -1
-            for row in range(idx + 1, len(matrix)):
-                if matrix[row][idx] != 0:
-                    if matrix[row][idx] == 1:
-                        best_swap_row = row
-                    elif matrix[row][idx] > 0:
-                        if best_swap_row < 0:
-                            best_swap_row = row
-                        elif matrix[row][idx] < matrix[best_swap_row][idx]:
-                            best_swap_row = row
-            tmp = matrix[best_swap_row]
-            matrix[best_swap_row] = matrix[idx]
-            matrix[idx] = tmp
-        elif matrix[idx][idx] != 0:
-            factor = 1 // matrix[idx][idx]
-            matrix[idx] = factor * matrix[idx]
-        for row in range(idx + 1, len(matrix)):
-            if matrix[row][idx] != 0:
-                factor = matrix[row][idx] // matrix[idx][idx]
-                matrix[row] -= factor * matrix[idx]
-
-    return matrix
-
-
-def count_variables(equation: np.ndarray) -> int:
-    count = 0
-    for var in equation[:-1]:
-        if var != 0:
-            count += 1
-    return count
-
-
-def solve_single_variable(equation: np.ndarray) -> tuple[int, tuple[int, int]] | None:
-    idx_coefficient = -1
-    for coeff in equation[:-1]:
-        idx_coefficient += 1
-        if coeff != 0:
-            break
-    if equation[-1] % equation[idx_coefficient] != 0:
-        return None
-    result = equation[-1] // equation[idx_coefficient]
-    return idx_coefficient, (result.item(), result.item())
-
-
-def constrain_upper_bounds_by_equation(
-    equation: np.ndarray, coefficients: list[tuple[int, int]], seen_indeces: set[int]
-) -> list[tuple[int, tuple[int, int]]]:
-    updated: list[tuple[int, tuple[int, int]]] = []
-
-    equation_coefficients: list[int] = [
-        idx for idx, value in enumerate(equation[:-1]) if value != 0
-    ]
-    idx_pivot = 0
-    while idx_pivot < len(equation) - 1:
-        coefficient_pivot = equation[idx_pivot]
-        if coefficient_pivot == 0 or idx_pivot in seen_indeces:
-            idx_pivot += 1
-            continue
-        pivot_upper_bound = equation[-1]
-        for idx_coefficient in equation_coefficients:
-            if idx_coefficient == idx_pivot:
-                continue
-            value_coefficient = equation[idx_coefficient]
-            if value_coefficient < 0:
-                coefficient_upper_bound = coefficients[idx_coefficient][1]
-                coefficient_bound_factor = (
-                    coefficient_upper_bound if coefficient_upper_bound != -1 else 0
-                )
-            else:
-                coefficient_bound_factor = coefficients[idx_coefficient][0]
-
-            pivot_upper_bound -= equation[idx_coefficient] * coefficient_bound_factor
-        if pivot_upper_bound % coefficient_pivot == 0:
-            pivot_upper_bound = pivot_upper_bound // coefficient_pivot
-            if pivot_upper_bound >= 0:
-                seen_indeces.add(idx_pivot)
-                updated.append(
-                    (
-                        idx_pivot,
-                        (coefficients[idx_pivot][0], pivot_upper_bound.item()),
-                    )
-                )
-        idx_pivot += 1
-
-    return updated
-
-
-def constrain_lower_bounds_by_equation(
-    equation: np.ndarray, coefficients: list[tuple[int, int]], seen_indeces: set[int]
-) -> list[tuple[int, tuple[int, int]]]:
-    updated: list[tuple[int, tuple[int, int]]] = []
-
-    equation_coefficients: list[int] = [
-        idx for idx, value in enumerate(equation[:-1]) if value != 0
-    ]
-    idx_pivot = 0
-    while idx_pivot < len(equation) - 1:
-        coefficient_pivot = equation[idx_pivot]
-        if coefficient_pivot == 0 or idx_pivot in seen_indeces:
-            idx_pivot += 1
-            continue
-        pivot_lower_bound = equation[-1]
-        for idx_coefficient in equation_coefficients:
-            if idx_coefficient == idx_pivot:
-                continue
-            value_coefficient = equation[idx_coefficient]
-            if value_coefficient < 0:
-                coefficient_bound_factor = coefficients[idx_coefficient][0]
-            else:
-                coefficient_bound_factor = coefficients[idx_coefficient][1]
-
-            if coefficient_bound_factor < 0:
-                pivot_lower_bound = -1
-            else:
-                pivot_lower_bound -= (
-                    equation[idx_coefficient] * coefficient_bound_factor
-                )
-
-        if pivot_lower_bound >= 0 and pivot_lower_bound % coefficient_pivot == 0:
-            pivot_lower_bound = pivot_lower_bound // coefficient_pivot
-            if pivot_lower_bound >= 0:
-                seen_indeces.add(idx_pivot)
-                updated.append(
-                    (
-                        idx_pivot,
-                        (pivot_lower_bound.item(), coefficients[idx_pivot][1]),
-                    )
-                )
-        idx_pivot += 1
-
-    return updated
-
-
-def constrain_coefficients(
-    matrix: list[np.ndarray], coefficients: list[tuple[int, int]]
-) -> list[tuple[int, int]]:
-    seen: set[int] = set()
-    for row in matrix[::-1]:
-        variables = count_variables(row)
-        if variables <= 0:
-            continue
-        if variables == 1:
-            solved = solve_single_variable(row)
-            if not solved:
-                continue
-            coefficients[solved[0]] = solved[1]
-            seen.add(solved[0])
-        else:
-            coefficient_updates = constrain_upper_bounds_by_equation(
-                row, coefficients, seen
+def patterns(coeffs: list[tuple[int, ...]]) -> dict[tuple[int, ...], int]:
+    out: dict[tuple[int, ...], int] = {}
+    num_buttons = len(coeffs)
+    num_variables = len(coeffs[0])
+    for pattern_len in range(num_buttons + 1):
+        for buttons in combinations(range(num_buttons), pattern_len):
+            pattern = tuple(
+                map(sum, zip((0,) * num_variables, *(coeffs[i] for i in buttons)))
             )
-            for idx, bounds in coefficient_updates:
-                coefficients[idx] = bounds
-
-    seen = set()
-    for row in matrix[::-1]:
-        variables = count_variables(row)
-        if variables <= 0:
-            continue
-        if variables == 1:
-            for idx in range(len(row) - 1):
-                if row[idx] > 0:
-                    seen.add(idx)
-                    break
-        else:
-            coefficient_updates = constrain_lower_bounds_by_equation(
-                row, coefficients, seen
-            )
-            for idx, bounds in coefficient_updates:
-                coefficients[idx] = bounds
-
-    return coefficients
+            if pattern not in out:
+                out[pattern] = pattern_len
+    return out
 
 
-def is_valid_solution(matrix: list[np.ndarray], coefficients: list[int]) -> bool:
-    for row in matrix:
-        lhs = 0
-        for idx, param in enumerate(row[:-1]):
-            lhs += param * coefficients[idx]
-        rhs = row[-1]
+def raise_joltage(goal: tuple[int, ...], buttons: list[tuple[int, ...]]) -> int:
+    pattern_costs = patterns(buttons)
 
-        if lhs != rhs:
-            return False
+    @cache
+    def solve_joltage(goal: tuple[int, ...]) -> int:
+        if all(i == 0 for i in goal):
+            return 0
+        answer = 1000000
+        for pattern, pattern_cost in pattern_costs.items():
+            if all(i <= j and i % 2 == j % 2 for i, j in zip(pattern, goal)):
+                new_goal = tuple((j - i) // 2 for i, j in zip(pattern, goal))
+                answer = min(answer, pattern_cost + 2 * solve_joltage(new_goal))
+        return answer
 
-    return True
-
-
-def raise_joltage(goal: list[int], buttons: list[list[int]]) -> int:
-    print(f"Solving for: {goal} using {len(buttons)} buttons")
-    matrix = build_matrix(goal, buttons)
-    reduced_matrix = matrix_elimination(copy.deepcopy(matrix))
-    coefficients_bounds: list[tuple[int, int]] = [(0, -1) for _ in matrix[0][:-1]]
-    coefficients_bounds = constrain_coefficients(reduced_matrix, coefficients_bounds)
-    for idx, coef in enumerate(coefficients_bounds):
-        print(f"Button {idx + 1} Bounds: {coef}")
-    queue: list[tuple[int, list[int]]] = []
-    lowest_presses: list[int] = []
-    for idx, bounds in enumerate(coefficients_bounds):
-        if bounds[1] == -1 or bounds[1] >= bounds[0]:
-            presses = [b[0] for b in coefficients_bounds]
-            queue.append((idx, presses))
-            break
-
-    while queue:
-        print(f"Level size: {len(queue)}")
-        new_queue: list[tuple[int, list[int]]] = []
-        for start_idx, state in queue:
-            if sum(state) >= min(goal) and is_valid_solution(matrix, state):
-                if not lowest_presses or sum(state) < sum(lowest_presses):
-                    print(f"Found new lowest: {state}")
-                    lowest_presses = state
-
-            state_coefficients_bounds = constrain_coefficients(
-                reduced_matrix,
-                [
-                    (value, bounds[1]) if value < bounds[1] else (bounds[1], bounds[1])
-                    for value, bounds in zip(state, coefficients_bounds)
-                ],
-            )
-            for idx, bounds in enumerate(state_coefficients_bounds):
-                if idx < start_idx:
-                    continue
-                if bounds[1] == -1 or bounds[1] > state[idx]:
-                    new_state = state[:]
-                    new_state[idx] += 1
-                    if lowest_presses and sum(new_state) >= sum(lowest_presses):
-                        continue
-                    new_queue.append((idx, new_state))
-
-        queue = new_queue
-
-    print(f"Min presses found for {goal}: {sum(lowest_presses)}")
-    return sum(lowest_presses)
+    return solve_joltage(goal)
 
 
 def solve(path: str, part: int) -> None:
@@ -341,9 +98,15 @@ def solve(path: str, part: int) -> None:
 
     else:
         print("Solving for part 2")
-        machines.sort(key=lambda m: len(m.buttons))
         for machine in machines:
-            press_count += raise_joltage(machine.joltage, machine.buttons)
+            machine_joltage = tuple(machine.joltage)
+            machine_buttons = [
+                tuple(int(i in button) for i in range(len(machine.joltage)))
+                for button in machine.buttons
+            ]
+            presses = raise_joltage(machine_joltage, machine_buttons)
+            print(f"Joltage: {machine_joltage} reached with {presses} presses")
+            press_count += presses
 
     print(f"Button presses: {press_count}")
 
